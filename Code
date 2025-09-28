@@ -1,0 +1,478 @@
+```lua
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Dark gray palette
+local Palette = {
+    Background = Color3.fromRGB(30, 30, 34),
+    Panel = Color3.fromRGB(42, 42, 48),
+    Accent = Color3.fromRGB(72, 72, 78),
+    Highlight = Color3.fromRGB(100, 100, 110),
+    Text = Color3.fromRGB(255, 255, 255),
+    SubText = Color3.fromRGB(200, 200, 205)
+}
+
+local function tween(obj, props, info)
+    info = info or TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local t = TweenService:Create(obj, info, props)
+    t:Play()
+    return t
+end
+
+-- Screen GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ForsakenHubGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Loading popup
+local loadingFrame = Instance.new("Frame")
+loadingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+loadingFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+loadingFrame.Size = UDim2.new(0, 260, 0, 120)
+loadingFrame.BackgroundColor3 = Palette.Panel
+loadingFrame.BorderSizePixel = 0
+loadingFrame.Parent = screenGui
+loadingFrame.BackgroundTransparency = 1
+tween(loadingFrame, {BackgroundTransparency = 0}, TweenInfo.new(0.4))
+
+local loadCorner = Instance.new("UICorner")
+loadCorner.CornerRadius = UDim.new(0, 12)
+loadCorner.Parent = loadingFrame
+
+local loadLabel = Instance.new("TextLabel")
+loadLabel.Size = UDim2.new(1, 0, 0, 50)
+loadLabel.Position = UDim2.new(0, 0, 0, 20)
+loadLabel.BackgroundTransparency = 1
+loadLabel.Text = "Loading..."
+loadLabel.Font = Enum.Font.GothamBold
+loadLabel.TextSize = 24
+loadLabel.TextColor3 = Palette.Text
+loadLabel.TextTransparency = 1
+loadLabel.Parent = loadingFrame
+tween(loadLabel, {TextTransparency = 0}, TweenInfo.new(0.4))
+
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(1, 0, 0, 24)
+creditLabel.Position = UDim2.new(0, 0, 0, 80)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Text = "Made by Rex-Script"
+creditLabel.Font = Enum.Font.Gotham
+creditLabel.TextSize = 14
+creditLabel.TextColor3 = Palette.SubText
+creditLabel.TextTransparency = 1
+creditLabel.Parent = loadingFrame
+tween(creditLabel, {TextTransparency = 0.2}, TweenInfo.new(0.6))
+
+spawn(function()
+    local dots = ""
+    while loadingFrame.Parent do
+        dots = dots == "..." and "" or dots .. "."
+        loadLabel.Text = "Loading" .. dots
+        wait(0.5)
+    end
+end)
+
+-- Main GUI
+local mainFrame = Instance.new("Frame")
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.BackgroundColor3 = Palette.Panel
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+mainFrame.ClipsDescendants = true
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 1.5
+mainStroke.Color = Palette.Highlight
+mainStroke.Transparency = 0.4
+mainStroke.Parent = mainFrame
+
+-- Top bar
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 50)
+topBar.BackgroundColor3 = Palette.Background
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+topBar.ZIndex = 2
+
+local title = Instance.new("TextLabel")
+title.Text = "Forsaken Hub"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.TextColor3 = Palette.Text
+title.BackgroundTransparency = 1
+title.Position = UDim2.new(0, 16, 0, 0)
+title.Size = UDim2.new(1, -80, 1, 0)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.ZIndex = 3
+title.Parent = topBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Text = "✕"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 24
+closeBtn.TextColor3 = Color3.fromRGB(255, 90, 90)
+closeBtn.BackgroundColor3 = Palette.Accent
+closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Position = UDim2.new(1, -48, 0, 5)
+closeBtn.ZIndex = 3
+closeBtn.Parent = topBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseEnter:Connect(function()
+    tween(closeBtn, {TextColor3 = Color3.fromRGB(255, 150, 150), BackgroundColor3 = Palette.Highlight}, TweenInfo.new(0.2))
+end)
+closeBtn.MouseLeave:Connect(function()
+    tween(closeBtn, {TextColor3 = Color3.fromRGB(255, 90, 90), BackgroundColor3 = Palette.Accent}, TweenInfo.new(0.2))
+end)
+
+-- Floating toggle button for mobile
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Text = "☰"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 24
+toggleBtn.TextColor3 = Palette.Text
+toggleBtn.BackgroundColor3 = Palette.Accent
+toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.Visible = false
+toggleBtn.ZIndex = 3
+toggleBtn.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 12)
+toggleCorner.Parent = toggleBtn
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Color = Palette.Highlight
+toggleStroke.Transparency = 0.4
+toggleStroke.Parent = toggleBtn
+
+toggleBtn.MouseEnter:Connect(function()
+    tween(toggleBtn, {BackgroundColor3 = Palette.Highlight}, TweenInfo.new(0.2))
+end)
+toggleBtn.MouseLeave:Connect(function()
+    tween(toggleBtn, {BackgroundColor3 = Palette.Accent}, TweenInfo.new(0.2))
+end)
+
+-- Function to toggle GUI visibility
+local function toggleGui()
+    if mainFrame.Visible then
+        tween(mainFrame, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In))
+        wait(0.4)
+        mainFrame.Visible = false
+        toggleBtn.Visible = true
+    else
+        mainFrame.Visible = true
+        tween(mainFrame, {Size = UDim2.new(0, 400, 0, 300), BackgroundTransparency = 0}, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out))
+        toggleBtn.Visible = false
+    end
+end
+
+closeBtn.MouseButton1Click:Connect(toggleGui)
+toggleBtn.MouseButton1Click:Connect(toggleGui)
+
+-- Keybind to toggle GUI (H key)
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.H then
+        toggleGui()
+    end
+end)
+
+-- Dragging functionality
+local dragging, dragStart, startPos
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+topBar.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        mainFrame.Position = newPos
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Buttons Container
+local buttonContainer = Instance.new("Frame")
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.Position = UDim2.new(0, 20, 0, 60)
+buttonContainer.Size = UDim2.new(1, -40, 1, -80)
+buttonContainer.Parent = mainFrame
+
+local uiGrid = Instance.new("UIGridLayout")
+uiGrid.CellSize = UDim2.new(0.45, 0, 0, 50)
+uiGrid.CellPadding = UDim2.new(0, 10, 0, 10)
+uiGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+uiGrid.VerticalAlignment = Enum.VerticalAlignment.Top
+uiGrid.Parent = buttonContainer
+
+local uiPadding = Instance.new("UIPadding")
+uiPadding.PaddingTop = UDim.new(0, 10)
+uiPadding.PaddingLeft = UDim.new(0, 10)
+uiPadding.PaddingRight = UDim.new(0, 10)
+uiPadding.Parent = buttonContainer
+
+local function createButton(text, callback)
+    local btn = Instance.new("TextButton")
+    btn.BackgroundColor3 = Palette.Accent
+    btn.TextColor3 = Palette.Text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 18
+    btn.Text = text
+    btn.AutoButtonColor = false
+    btn.Parent = buttonContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Palette.Highlight
+    stroke.Transparency = 0.4
+    stroke.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        tween(btn, {BackgroundColor3 = Palette.Highlight}, TweenInfo.new(0.2))
+    end)
+    btn.MouseLeave:Connect(function()
+        tween(btn, {BackgroundColor3 = Palette.Accent}, TweenInfo.new(0.2))
+    end)
+
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- ESP functionality
+local ESPEnabled = false
+local Connections = {}
+
+local function activateESP()
+    local playersFolder = workspace:FindFirstChild("Players")
+    local mapPath = workspace:FindFirstChild("Map")
+    local ingamePath = mapPath and mapPath:FindFirstChild("Ingame")
+    local mapIngamePath = ingamePath and ingamePath:FindFirstChild("Map")
+
+    local settings = {
+        Killers = { FillColor = Color3.fromRGB(255, 0, 0), FillTransparency = 0.5, OutlineColor = Color3.fromRGB(255, 255, 255), Parent = playersFolder },
+        Survivors = { FillColor = Color3.fromRGB(0, 255, 0), FillTransparency = 0.5, OutlineColor = Color3.fromRGB(255, 255, 255), Parent = playersFolder },
+        Tools = { FillColor = Color3.fromRGB(255, 255, 0), FillTransparency = 0.5, OutlineColor = Color3.fromRGB(255, 255, 255), Parent = mapIngamePath }
+    }
+
+    local function addHighlight(instance, groupName)
+        if (groupName == "Tools" and instance:IsA("Tool") or groupName ~= "Tools" and instance:IsA("Model")) and not instance:FindFirstChildOfClass("Highlight") then
+            local s = settings[groupName]
+            if s then
+                local highlight = Instance.new("Highlight")
+                highlight.FillColor = s.FillColor
+                highlight.FillTransparency = s.FillTransparency
+                highlight.OutlineColor = s.OutlineColor
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = instance
+            end
+        end
+    end
+
+    local function removeHighlight(instance)
+        local highlight = instance:FindFirstChildOfClass("Highlight")
+        if highlight then
+            highlight:Destroy()
+        end
+    end
+
+    local function updateESP()
+        if not ESPEnabled then
+            for _, conn in pairs(Connections) do
+                conn:Disconnect()
+            end
+            Connections = {}
+            for groupName, s in pairs(settings) do
+                if s.Parent then
+                    for _, instance in pairs(s.Parent:GetChildren()) do
+                        removeHighlight(instance)
+                    end
+                end
+            end
+            return
+        end
+
+        for groupName, s in pairs(settings) do
+            if s.Parent then
+                for _, instance in pairs(s.Parent:GetChildren()) do
+                    addHighlight(instance, groupName)
+                end
+                local addedConn = s.Parent.ChildAdded:Connect(function(child)
+                    addHighlight(child, groupName)
+                end)
+                local removedConn = s.Parent.ChildRemoved:Connect(function(child)
+                    removeHighlight(child)
+                end)
+                table.insert(Connections, addedConn)
+                table.insert(Connections, removedConn)
+            else
+                warn("Parent not found for " .. groupName .. " in ESP settings")
+            end
+        end
+    end
+
+    ESPEnabled = not ESPEnabled
+    updateESP()
+    return ESPEnabled
+end
+
+-- Infinite Stamina functionality
+local InfStaminaEnabled = false
+local function toggleInfStamina()
+    local success, stamina = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
+    end)
+    if not success then
+        warn("Failed to access Sprinting module!")
+        return InfStaminaEnabled
+    end
+
+    stamina.MaxStamina = 100
+    stamina.MinStamina = -20
+    stamina.StaminaGain = 100
+    stamina.StaminaLoss = 5
+    stamina.SprintSpeed = 26
+    stamina.StaminaLossDisabled = not InfStaminaEnabled
+    InfStaminaEnabled = not InfStaminaEnabled
+    return InfStaminaEnabled
+end
+
+-- Auto Generator functionality
+local AutoGenEnabled = false
+local AutoGenConnection = nil
+
+local function solveGenerators(path, repeatCount, modelCheck)
+    if not path then
+        warn("Invalid path provided to solveGenerators")
+        return false
+    end
+
+    local success = false
+    for _, v in pairs(path:GetChildren()) do
+        if (not modelCheck or v:IsA("Model")) and string.lower(v.Name) == "generator" then
+            local remotes = v:FindFirstChild("Remotes")
+            local remoteEvent = remotes and remotes:FindFirstChild("RE")
+            if remoteEvent then
+                for i = 1, repeatCount do
+                    local fireSuccess, fireError = pcall(function()
+                        remoteEvent:FireServer()
+                    end)
+                    if not fireSuccess then
+                        warn("Failed to fire remote for " .. v.Name .. ": " .. fireError)
+                    else
+                        success = true
+                    end
+                    task.wait(0.1)
+                end
+            else
+                warn("Remotes or RE not found for " .. v.Name)
+            end
+        end
+    end
+    return success
+end
+
+local function trySolveGenerators()
+    local mapPath = game.Workspace:FindFirstChild("Map")
+    if not mapPath then
+        warn("Map not found in Workspace")
+        return false
+    end
+
+    local ingamePath = mapPath:FindFirstChild("Ingame")
+    if not ingamePath then
+        warn("Ingame not found in Map")
+        return false
+    end
+
+    local mapIngamePath = ingamePath:FindFirstChild("Map")
+    local success = false
+
+    if mapIngamePath then
+        success = success or solveGenerators(mapIngamePath, 4, false)
+        task.wait(1.8)
+        success = success or solveGenerators(mapIngamePath, 1, false)
+    end
+
+    task.wait(1.8)
+    local generatorsPath = mapIngamePath and mapIngamePath:FindFirstChild("Generators")
+    if generatorsPath then
+        success = success or solveGenerators(generatorsPath, 4, true)
+    end
+
+    if not success then
+        warn("No generators solved: paths or remotes not found")
+    end
+    return success
+end
+
+local function toggleAutoGen()
+    AutoGenEnabled = not AutoGenEnabled
+    if AutoGenEnabled then
+        AutoGenConnection = RunService.Heartbeat:Connect(function()
+            trySolveGenerators()
+        end)
+    else
+        if AutoGenConnection then
+            AutoGenConnection:Disconnect()
+            AutoGenConnection = nil
+        end
+    end
+    return AutoGenEnabled
+end
+
+-- Create buttons
+local espButton = createButton("Toggle ESP", function()
+    local isActive = activateESP()
+    espButton.Text = isActive and "Disable ESP" or "Enable ESP"
+end)
+
+local infStaminaButton = createButton("Toggle Inf Stamina", function()
+    local isActive = toggleInfStamina()
+    infStaminaButton.Text = isActive and "Disable Inf Stamina" or "Enable Inf Stamina"
+end)
+
+local autoGenButton = createButton("Toggle Auto Gen", function()
+    local isActive = toggleAutoGen()
+    autoGenButton.Text = isActive and "Disable Auto Gen" or "Enable Auto Gen"
+end)
+
+-- Transition from loading to main GUI
+wait(2)
+tween(loadingFrame, {BackgroundTransparency = 1}, TweenInfo.new(0.4))
+tween(loadLabel, {TextTransparency = 1}, TweenInfo.new(0.4))
+tween(creditLabel, {TextTransparency = 1}, TweenInfo.new(0.4))
+wait(0.4)
+loadingFrame:Destroy()
+mainFrame.Visible = true
+tween(mainFrame, {Size = UDim2.new(0, 400, 0, 300), BackgroundTransparency = 0}, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out))
+toggleBtn.Visible = false
+```
